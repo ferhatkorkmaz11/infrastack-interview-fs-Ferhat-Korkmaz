@@ -1,0 +1,26 @@
+{
+  "name": "infrastack-interview-fs-ferhat-korkmaz",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "run-scripts": "turbo run run --filter=scripts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "turbo": "2.1.1"
+  },
+  "workspaces": [
+    "packages/*",
+    "microservices/*",
+    "dashboard",
+    "scripts"
+  ]
+}

@@ -1,0 +1,2 @@
+# based on my initial research, a single yaml will suffice me to configure the open telemetry collector.
+# https://opentelemetry.io/docs/collector/configuration/
