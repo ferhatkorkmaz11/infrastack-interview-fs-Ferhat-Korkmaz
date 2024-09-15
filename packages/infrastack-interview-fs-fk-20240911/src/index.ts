@@ -1,5 +1,13 @@
-import { NodeSDK } from "@opentelemetry/sdk-node";
+import { NodeSDK, resources } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
+import { CompressionAlgorithm } from "@opentelemetry/otlp-exporter-base";
+import {
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from "@opentelemetry/semantic-conventions";
+import { randomUUID } from "crypto";
+
+const ATTR_SERVICE_INSTANCE_ID = "service.instance.id"; // This is not exported from the semantic-conventions package, It says it is experimental, so I just defined it myself https://github.com/open-telemetry/opentelemetry-js/blob/9c30124e764e08bd6ccf8dbfbe426a8531c20352/semantic-conventions/src/experimental_attributes.ts#L5919
 
 interface RegisterOptions {
   endpoint: string;
@@ -24,9 +32,12 @@ export async function register({
     console.error("Invalid endpoint URL. Please provide a valid URL.");
     return;
   }
-  const exporter = new OTLPTraceExporter({
+  const exporterOptions = {
     url: endpoint,
-  });
+    compression: CompressionAlgorithm.GZIP,
+  };
+
+  const exporter = new OTLPTraceExporter(exporterOptions);
 
   const selectedInstrumentations: any[] = [];
 
@@ -283,9 +294,14 @@ export async function register({
     }
   }
 
-  const sdk = new NodeSDK({
+  const sdk: NodeSDK = new NodeSDK({
     traceExporter: exporter,
     instrumentations: selectedInstrumentations,
+    resource: new resources.Resource({
+      [ATTR_SERVICE_NAME]: endpoint,
+      [ATTR_SERVICE_VERSION]: "1.0.0",
+      [ATTR_SERVICE_INSTANCE_ID]: process.env.POD_NAME ?? randomUUID(),
+    }),
   });
 
   sdk.start();
