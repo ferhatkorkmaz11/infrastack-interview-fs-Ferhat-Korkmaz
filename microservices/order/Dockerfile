@@ -1,1 +1,15 @@
-# dockerfile for order service will come here
+FROM node:18-alpine
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npx tsc
+
+EXPOSE 8082
+
+CMD ["node", "dist/index.js"]
