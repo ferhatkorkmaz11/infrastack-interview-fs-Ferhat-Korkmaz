@@ -14,7 +14,7 @@ Thumbs.db
 /.turbo
 /cache
 
-/dist
+*/dist
 /out
 /.next
 /build
@@ -45,8 +45,8 @@ Thumbs.db
 
 .eslintcache
 
-/.next/
-/.next/
+*/.next/
+*/.next/
 .next/cache
 .next/standalone
 .next/static
