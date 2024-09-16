@@ -2,7 +2,7 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: localhost:4317
+        endpoint: 0.0.0.0:4317
 
 processors:
   batch:
@@ -15,14 +15,11 @@ exporters:
     username: "${CLICKHOUSE_USERNAME}"
     password: "${CLICKHOUSE_PASSWORD}"
     database: "${CLICKHOUSE_DATABASE}"
-    async_insert: true
-    ttl: 72h
-    compress: lz4
     create_schema: true
     logs_table_name: otel_logs
     traces_table_name: otel_traces
     metrics_table_name: otel_metrics
-    timeout: 5s
+    timeout: 15s
     retry_on_failure:
       enabled: true
       initial_interval: 5s
