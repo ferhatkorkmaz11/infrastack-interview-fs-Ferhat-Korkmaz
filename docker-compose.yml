@@ -20,6 +20,8 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     ports:
       - "8082:8082"
+    depends_on:
+      - otel-collector
     restart: unless-stopped
 
   microservice-payment:
@@ -30,6 +32,8 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     ports:
       - "8081:8081"
+    depends_on:
+      - otel-collector
     restart: unless-stopped
 
   microservice-user:
@@ -40,4 +44,6 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     ports:
       - "8080:8080"
+    depends_on:
+      - otel-collector
     restart: unless-stopped
