@@ -295,15 +295,20 @@ export async function register({
     }
   }
 
-  selectedInstrumentations.push(getNodeAutoInstrumentations());
+  const resource = new resources.Resource({
+    [ATTR_SERVICE_NAME]: endpoint,
+    [ATTR_SERVICE_VERSION]: "1.0.0",
+    [ATTR_SERVICE_INSTANCE_ID]: process.env.POD_NAME ?? randomUUID(),
+  });
+
+  console.log("Selected instrumentations:", selectedInstrumentations);
+  console.log("Trace exporter initialized with options:", exporterOptions);
+  console.log("Resource initialized with attributes:", resource.attributes);
+
   const sdk: NodeSDK = new NodeSDK({
     traceExporter: exporter,
     instrumentations: selectedInstrumentations,
-    resource: new resources.Resource({
-      [ATTR_SERVICE_NAME]: endpoint,
-      [ATTR_SERVICE_VERSION]: "1.0.0",
-      [ATTR_SERVICE_INSTANCE_ID]: process.env.POD_NAME ?? randomUUID(),
-    }),
+    resource: resource,
   });
 
   sdk.start();
