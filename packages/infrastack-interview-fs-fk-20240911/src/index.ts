@@ -6,6 +6,7 @@ import {
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
 import { randomUUID } from "crypto";
+import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 
 const ATTR_SERVICE_INSTANCE_ID = "service.instance.id"; // This is not exported from the semantic-conventions package, It says it is experimental, so I just defined it myself https://github.com/open-telemetry/opentelemetry-js/blob/9c30124e764e08bd6ccf8dbfbe426a8531c20352/semantic-conventions/src/experimental_attributes.ts#L5919
 
@@ -294,6 +295,7 @@ export async function register({
     }
   }
 
+  selectedInstrumentations.push(getNodeAutoInstrumentations());
   const sdk: NodeSDK = new NodeSDK({
     traceExporter: exporter,
     instrumentations: selectedInstrumentations,
@@ -308,4 +310,12 @@ export async function register({
   console.log(
     "OpenTelemetry SDK registered and started with selected instrumentations."
   );
+
+  process.on("SIGTERM", () => {
+    sdk
+      .shutdown()
+      .then(() => console.log("Tracing terminated"))
+      .catch((error) => console.log("Error terminating tracing", error))
+      .finally(() => process.exit(0));
+  });
 }
