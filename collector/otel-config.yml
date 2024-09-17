@@ -40,3 +40,6 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhouse]
+  telemetry:
+    logs:
+      level: "debug"
