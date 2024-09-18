@@ -20,9 +20,13 @@ services:
       - "8082:8082"
     depends_on:
       - otel-collector
+      - microservice-user
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
-      - SERVICE_NAME="payment-service"
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - USER_SERVICE_BASE_URL=http://microservice-user:8080
+      - SERVICE_NAME=order-service
+      - POD_NAME=payment-service-0
+      - FAILURE_RATE=0
       - METRICS_ENABLED=true
     restart: unless-stopped
 
@@ -34,9 +38,13 @@ services:
       - "8081:8081"
     depends_on:
       - otel-collector
+      - microservice-order
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
-      - SERVICE_NAME="payment-service"
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - ORDER_SERVICE_BASE_URL=http://microservice-order:8082
+      - SERVICE_NAME=payment-service
+      - POD_NAME=payment-service-0
+      - FAILURE_RATE=0
       - METRICS_ENABLED=true
     restart: unless-stopped
 
@@ -49,7 +57,9 @@ services:
     depends_on:
       - otel-collector
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
-      - SERVICE_NAME="user-service"
-      - METRICS_ENABLED=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - SERVICE_NAME=user-service
+      - POD_NAME=user-service-0
+      - FAILURE_RATE=0
+      - METRICS_ENABLED=true
     restart: unless-stopped
