@@ -1,5 +1,4 @@
 {
-  "placeholder": "this will change with respect to typescript",
   "name": "scripts",
   "version": "1.0.0",
   "main": "index.js",
@@ -11,7 +10,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@ferhatkorkmaz11/infrastack-interview-fs-fk-20240916": "^1.0.3"
+    "@clickhouse/client": "^1.6.0",
+    "@ferhatkorkmaz11/infrastack-interview-fs-fk-20240916": "^1.0.18",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "^22.5.5",
