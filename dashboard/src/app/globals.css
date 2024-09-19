@@ -1,27 +1,45 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #1a1a1a;
+  --foreground: #e0e0e0;
+  --primary: #3d3d3d;
+  --secondary: #2a2a2a;
+  --accent: #6d28d9;
+  --success: #10b981;
+  --error: #ef4444;
+  --card-bg: #2d2d2d;
+  --navbar-bg: #242424;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Space Grotesk", sans-serif;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@layer components {
+  .card {
+    @apply bg-[var(--card-bg)] rounded-lg shadow-lg border border-[var(--primary)] border-opacity-30 overflow-hidden;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200 shadow-md hover:shadow-lg;
+  }
+
+  .btn-primary {
+    @apply bg-[var(--primary)] text-white hover:bg-opacity-90;
+  }
+
+  .input {
+    @apply bg-[var(--card-bg)] border border-[var(--primary)] border-opacity-30 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent;
+  }
+
+  .chip {
+    @apply px-2 py-1 text-xs font-medium rounded-full bg-[var(--accent)] text-white;
   }
 }
