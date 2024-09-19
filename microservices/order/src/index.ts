@@ -1,6 +1,7 @@
 import { configDotenv } from "dotenv";
 configDotenv();
 import { Express } from "express";
+import axios from "axios";
 import {
   register,
   log,
@@ -26,6 +27,7 @@ interface CreateOrderRequest {
 }
 
 const orders: Order[] = [];
+
 async function startServer() {
   const endpoint =
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4317";
@@ -45,45 +47,39 @@ async function startServer() {
         return;
       }
       const createOrderRequest: CreateOrderRequest = req.body;
-      const user = await fetch(
+      const userResponse = await axios.get(
         `${USER_SERVICE_BASE_URL}/users/${createOrderRequest.userId}`
       );
-      if (!user.ok) {
-        res.status(404).send("User not found");
-        log.error(`User not found with id: ${createOrderRequest.userId}`);
-        return;
-      }
-      const order: Order = {
+      const user: User = userResponse.data;
+      const newOrder: Order = {
         id: orders.length + 1,
-        user: await user.json(),
+        user,
         total: createOrderRequest.total,
       };
-      orders.push(order);
-      res.json(order);
+      orders.push(newOrder);
+      res.json(newOrder);
     } catch (error) {
       log.error(`Error handling request:${error}`);
       res.status(500).send("Internal Server Error");
     }
   });
-
-  app.get("/orders/:id", async (req, res) => {
+  app.get("/orders/:id", (req, res) => {
     try {
       log.info(`Received request from host: ${req.headers.host}`);
       if (Math.random() < FAILURE_RATE) {
         res.status(500).send("Internal Server Error");
-        log.error(`Random failure for creating order.`);
+        log.error(`Random failure for getting order.`);
         return;
       }
       const id = parseInt(req.params.id);
       const order = orders.find((o) => o.id === id);
-      if (!order) {
+      if (order) {
+        res.json(order);
+      } else {
         res.status(404).send("Order not found");
-        log.error(`Order not found with id: ${id}`);
-        return;
       }
-      res.json(order);
     } catch (error) {
-      log.error("Error handling request:");
+      log.error(`Error handling request:${error}`);
       res.status(500).send("Internal Server Error");
     }
   });

@@ -1,6 +1,7 @@
 import { configDotenv } from "dotenv";
 configDotenv();
 import { Express } from "express";
+import axios from "axios";
 import {
   register,
   log,
@@ -43,15 +44,15 @@ async function startServer() {
         return;
       }
       const createPaymentRequest: CreatePaymentRequest = req.body;
-      const order = await fetch(
+      const orderResponse = await axios.get(
         `${ORDER_SERVICE_BASE_URL}/orders/${createPaymentRequest.orderId}`
       );
-      if (!order.ok) {
+      if (!orderResponse.data) {
         res.status(404).send("Order not found");
         log.error(`Order not found with id: ${createPaymentRequest.orderId}`);
         return;
       }
-      const orderData: Order = await order.json();
+      const orderData: Order = orderResponse.data;
       res.json(orderData);
     } catch (error) {
       log.error(`Error handling request:${error}`);
