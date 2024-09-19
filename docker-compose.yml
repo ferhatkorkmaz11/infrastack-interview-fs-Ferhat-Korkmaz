@@ -63,3 +63,17 @@ services:
       - FAILURE_RATE=0
       - METRICS_ENABLED=true
     restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - CLICKHOUSE_HOST=${CLICKHOUSE_ENDPOINT_HTTP}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE}
+      - NODE_ENV=production
+    restart: unless-stopped
