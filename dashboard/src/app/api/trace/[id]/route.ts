@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@clickhouse/client";
-
+import client from "@/lib/clickhouse";
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -8,13 +7,6 @@ export async function GET(
   const traceId = params.id;
 
   try {
-    const client = createClient({
-      host: process.env.CLICKHOUSE_HOST,
-      username: process.env.CLICKHOUSE_USER,
-      password: process.env.CLICKHOUSE_PASSWORD,
-      database: process.env.CLICKHOUSE_DATABASE,
-    });
-
     const query = `
       SELECT 
         Timestamp,

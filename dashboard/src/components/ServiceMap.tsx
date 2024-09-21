@@ -23,6 +23,11 @@ interface ServiceInteraction {
   errorRate: number;
 }
 
+interface ServiceMapResponse {
+  interactions: ServiceInteraction[];
+  isolatedServices: string[];
+}
+
 const timeRangeOptions = [
   { value: 5, label: 'Last 5 minutes' },
   { value: 10, label: 'Last 10 minutes' },
@@ -39,6 +44,7 @@ const ServiceMap: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<number>(10); 
+  const [noDataFound, setNoDataFound] = useState<boolean>(false);
 
   const calculateNodePositions = useMemo(() => (services: string[]) => {
     const centerX = 400;
@@ -62,55 +68,61 @@ const ServiceMap: React.FC = () => {
   const fetchServiceMapData = useMemo(() => async () => {
     try {
       const response = await fetch(`/api/service-map?timeRange=${timeRange}`);
-      if (response.ok) {
-        const interactions: ServiceInteraction[] = await response.json();
-        
-        const services = Array.from(new Set(interactions.flatMap(i => [i.source, i.target])));
-        const nodePositions = calculateNodePositions(services);
-        
-        const newNodes: Node[] = nodePositions.map((node) => ({
-          id: node.id,
-          data: { label: node.id },
-          position: node.position,
-          style: { 
-            background: 'var(--card-bg)', 
-            color: 'var(--foreground)', 
-            border: '1px solid var(--primary)',
-            borderRadius: '8px',
-            padding: '10px',
-            fontSize: '14px',
-            fontWeight: 500,
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-          },
-        }));
+      const data: ServiceMapResponse = await response.json();
 
-        const newEdges: Edge[] = interactions.map((interaction, index) => ({
-          id: `e${index}`,
-          source: interaction.source,
-          target: interaction.target,
-          type: 'smoothstep',
-          animated: true,
-          style: { stroke: interaction.errorRate > 0.1 ? 'var(--error)' : 'var(--success)', strokeWidth: 2 },
-          label: `${interaction.count} req | ${interaction.avgLatency.toFixed(2)}ms`,
-          labelStyle: { fill: 'var(--foreground)', fontSize: 12 },
-          labelBgStyle: { fill: 'var(--accent)', fillOpacity: 0.7 },
-          labelBgBorderRadius: 4,
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            color: interaction.errorRate > 0.1 ? 'var(--error)' : 'var(--success)',
-          },
-        }));
-
-        setNodes(newNodes);
-        setEdges(newEdges);
-        setError(null);
-      } else {
-        const errorData = await response.json();
-        setError(`Failed to fetch service map data: ${errorData.error}`);
+      if (data.interactions.length === 0 && data.isolatedServices.length === 0) {
+        setNoDataFound(true);
+        setNodes([]);
+        setEdges([]);
+        return;
       }
+
+      setNoDataFound(false);
+      const interactions: ServiceInteraction[] = data.interactions;
+      
+      const services = Array.from(new Set([...interactions.flatMap(i => [i.source, i.target]), ...data.isolatedServices]));
+      const nodePositions = calculateNodePositions(services);
+      
+      const newNodes: Node[] = nodePositions.map((node) => ({
+        id: node.id,
+        data: { label: node.id },
+        position: node.position,
+        style: { 
+          background: 'var(--card-bg)', 
+          color: 'var(--foreground)', 
+          border: '1px solid var(--primary)',
+          borderRadius: '8px',
+          padding: '10px',
+          fontSize: '14px',
+          fontWeight: 500,
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        },
+      }));
+
+      const newEdges: Edge[] = interactions.map((interaction, index) => ({
+        id: `e${index}`,
+        source: interaction.source,
+        target: interaction.target,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: interaction.errorRate > 0.1 ? 'var(--error)' : 'var(--success)', strokeWidth: 2 },
+        label: `${interaction.count} req | ${interaction.avgLatency.toFixed(2)}ms`,
+        labelStyle: { fill: 'var(--foreground)', fontSize: 12 },
+        labelBgStyle: { fill: 'var(--accent)', fillOpacity: 0.7 },
+        labelBgBorderRadius: 4,
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: interaction.errorRate > 0.1 ? 'var(--error)' : 'var(--success)',
+        },
+      }));
+
+      setNodes(newNodes);
+      setEdges(newEdges);
+      setError(null);
     } catch (error) {
       console.error('Error fetching service map data:', error);
       setError(`Error fetching service map data: ${(error as Error).message}`);
+      setNoDataFound(true);
     }
   }, [timeRange, calculateNodePositions, setNodes, setEdges]);
 
@@ -141,20 +153,27 @@ const ServiceMap: React.FC = () => {
           ))}
         </select>
       </div>
-      <div style={{ width: '100%', height: '700px' }} className={styles.serviceMap}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          connectionLineType={ConnectionLineType.SmoothStep}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-        >
-          <Controls />
-          <Background color="var(--primary)" gap={16} variant={BackgroundVariant.Dots} />
-        </ReactFlow>
-      </div>
+      {noDataFound ? (
+        <div className="text-center py-8">
+          <p className="text-xl mb-2">No services found within the selected time period 😢</p>
+          <p>Try adjusting the time range above to see more data.</p>
+        </div>
+      ) : (
+        <div style={{ width: '100%', height: '700px' }} className={styles.serviceMap}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            connectionLineType={ConnectionLineType.SmoothStep}
+            fitView
+            fitViewOptions={{ padding: 0.2 }}
+          >
+            <Controls />
+            <Background color="var(--primary)" gap={16} variant={BackgroundVariant.Dots} />
+          </ReactFlow>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,20 +1,27 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@clickhouse/client";
-
-interface RawServiceInteraction {
-  source: string;
-  url: string;
-  count: string;
-  avgLatency: string;
-  errorRate: string;
-}
+import client from "@/lib/clickhouse";
 
 interface ServiceInteraction {
   source: string;
   target: string;
   count: number;
   avgLatency: number;
-  errorRate: number;
+}
+
+interface ServiceMapResponse {
+  interactions: ServiceInteraction[];
+  isolatedServices: string[];
+}
+
+interface RawInteraction {
+  source: string;
+  target: string;
+  count: string;
+  avgLatency: string;
+}
+
+interface ServiceData {
+  ServiceName: string;
 }
 
 export async function GET(request: Request) {
@@ -22,13 +29,6 @@ export async function GET(request: Request) {
   const timeRange = parseInt(searchParams.get("timeRange") || "10", 10);
 
   try {
-    const client = createClient({
-      host: process.env.CLICKHOUSE_HOST,
-      username: process.env.CLICKHOUSE_USER,
-      password: process.env.CLICKHOUSE_PASSWORD,
-      database: process.env.CLICKHOUSE_DATABASE,
-    });
-
     let timeFilter = "";
     if (timeRange > 0) {
       timeFilter = `AND Timestamp >= now() - INTERVAL ${timeRange} MINUTE`;
@@ -36,67 +36,66 @@ export async function GET(request: Request) {
 
     const query = `
       SELECT 
-        ServiceName as source,
-        SpanAttributes['http.url'] as url,
+        source.ServiceName as source,
+        target.ServiceName as target,
         count(*) as count,
-        avg(Duration / 1000000) as avgLatency,
-        countIf(StatusCode = 'ERROR') / count(*) as errorRate
-      FROM otel_traces
-      WHERE SpanKind = 'Client' 
-        AND SpanAttributes['http.url'] != ''
+        avg(source.Duration / 1000000) as avgLatency
+      FROM otel_traces as source
+      JOIN otel_traces as target ON source.TraceId = target.TraceId AND source.SpanId = target.ParentSpanId
+      WHERE source.SpanKind = 'Client' 
+        AND source.ServiceName != target.ServiceName
         ${timeFilter}
-      GROUP BY ServiceName, SpanAttributes['http.url']
+      GROUP BY source.ServiceName, target.ServiceName
     `;
 
-    const resultSet = await client.query({
+    const interactionsResult = await client.query({
       query,
       format: "JSONEachRow",
     });
 
-    const rawData: RawServiceInteraction[] = await resultSet.json();
+    const rawInteractions =
+      (await interactionsResult.json()) as RawInteraction[];
 
-    const serviceInteractions = rawData
-      .map((item: RawServiceInteraction) => ({
+    const serviceInteractions: ServiceInteraction[] = rawInteractions.map(
+      (item: RawInteraction) => ({
         source: item.source,
-        target: item.url.includes("microservice-user")
-          ? "user-service"
-          : item.url.includes("microservice-order")
-          ? "order-service"
-          : item.url.includes("microservice-payment")
-          ? "payment-service"
-          : "unknown",
+        target: item.target,
         count: parseInt(item.count, 10),
         avgLatency: parseFloat(item.avgLatency),
-        errorRate: parseFloat(item.errorRate),
-      }))
-      .filter((item: ServiceInteraction) => item.target !== "unknown");
-
-    const combinedInteractions = serviceInteractions.reduce(
-      (acc: ServiceInteraction[], curr: ServiceInteraction) => {
-        const existingInteraction = acc.find(
-          (item) => item.source === curr.source && item.target === curr.target
-        );
-
-        if (existingInteraction) {
-          existingInteraction.count += curr.count;
-          existingInteraction.avgLatency =
-            (existingInteraction.avgLatency * existingInteraction.count +
-              curr.avgLatency * curr.count) /
-            (existingInteraction.count + curr.count);
-          existingInteraction.errorRate =
-            (existingInteraction.errorRate * existingInteraction.count +
-              curr.errorRate * curr.count) /
-            (existingInteraction.count + curr.count);
-        } else {
-          acc.push(curr);
-        }
-
-        return acc;
-      },
-      []
+      })
     );
 
-    return NextResponse.json(combinedInteractions);
+    const allServicesQuery = `
+      SELECT DISTINCT ServiceName
+      FROM otel_traces
+      WHERE 1=1 ${timeFilter}
+    `;
+
+    const allServicesResult = await client.query({
+      query: allServicesQuery,
+      format: "JSONEachRow",
+    });
+
+    const allServicesData = (await allServicesResult.json()) as ServiceData[];
+    const allServices = allServicesData.map(
+      (item: ServiceData) => item.ServiceName
+    );
+
+    const servicesWithInteractions = new Set([
+      ...serviceInteractions.map((i) => i.source),
+      ...serviceInteractions.map((i) => i.target),
+    ]);
+
+    const isolatedServices = allServices.filter(
+      (service) => !servicesWithInteractions.has(service)
+    );
+
+    const response: ServiceMapResponse = {
+      interactions: serviceInteractions,
+      isolatedServices: isolatedServices,
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching service map data:", error);
     return NextResponse.json(
