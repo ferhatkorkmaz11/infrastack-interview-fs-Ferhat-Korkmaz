@@ -18,6 +18,7 @@ interface RawInteraction {
   target: string;
   count: string;
   avgLatency: string;
+  errorRate: string;
 }
 
 interface ServiceData {
@@ -39,7 +40,8 @@ export async function GET(request: Request) {
         source.ServiceName as source,
         target.ServiceName as target,
         count(*) as count,
-        avg(source.Duration / 1000000) as avgLatency
+        avg(source.Duration / 1000000) as avgLatency,
+        countIf(source.SpanAttributes['http.status_code'] >= '400' AND source.SpanAttributes['http.status_code'] < '600') / count(*) as errorRate
       FROM otel_traces as source
       JOIN otel_traces as target ON source.TraceId = target.TraceId AND source.SpanId = target.ParentSpanId
       WHERE source.SpanKind = 'Client' 
@@ -62,6 +64,7 @@ export async function GET(request: Request) {
         target: item.target,
         count: parseInt(item.count, 10),
         avgLatency: parseFloat(item.avgLatency),
+        errorRate: parseFloat(item.errorRate),
       })
     );
 
@@ -94,7 +97,7 @@ export async function GET(request: Request) {
       interactions: serviceInteractions,
       isolatedServices: isolatedServices,
     };
-
+    console.log(response);
     return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching service map data:", error);
