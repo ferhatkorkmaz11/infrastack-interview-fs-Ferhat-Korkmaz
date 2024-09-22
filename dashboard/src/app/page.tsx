@@ -1,6 +1,9 @@
 import React from 'react';
 import ServiceMap from '../components/ServiceMap';
 import ServiceList from '../components/ServiceList';
+import dynamic from 'next/dynamic';
+
+const AIChat = dynamic(() => import('../components/AIChat'), { ssr: false });
 
 const Home: React.FC = () => {
   return (
@@ -17,9 +20,15 @@ const Home: React.FC = () => {
             <ServiceMap />
           </div>
         </div>
-        <div>
+        <div className="mb-12">
           <h2 className="text-2xl font-bold text-foreground mb-4">Service List</h2>
           <ServiceList />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-4">AI Assistant</h2>
+          <div className="card p-4">
+            <AIChat />
+          </div>
         </div>
       </main>
     </div>
