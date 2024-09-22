@@ -56,27 +56,34 @@ async function startServer() {
       const response = await fetch("http://localhost:8083/self");
       const data = await response.text();
       log.info(`Initial call to /self: ${response.status} - ${data}`);
-      setTimeout(async () => {
+
+      const checkExports = async (attempt = 1) => {
         const logCount = await getLogCount(client, SERVICE_NAME);
         const metricCount = await getMetricCount(client, SERVICE_NAME);
         const traceCount = await getTraceCount(client, SERVICE_NAME);
-        if (logCount >= 5) {
-          logsExported = true;
-        }
-        if (metricCount >= 2) {
-          metricsExported = true;
-        }
-        if (traceCount >= 1) {
-          tracesExported = true;
-        }
+
+        if (logCount >= 5) logsExported = true;
+        if (metricCount >= 2) metricsExported = true;
+        if (traceCount >= 1) tracesExported = true;
+
         if (logsExported && metricsExported && tracesExported) {
           log.info("All data exported successfully!");
           process.exit(0);
+        } else if (attempt < 5) {
+          const nextDelay = Math.pow(2, attempt) * 1000;
+          log.info(
+            `Attempt ${attempt} failed. Retrying in ${
+              nextDelay / 1000
+            } seconds...`
+          );
+          setTimeout(() => checkExports(attempt + 1), nextDelay);
         } else {
-          log.error("Data export failed!");
+          log.error("Data export failed after 5 attempts!");
           process.exit(1);
         }
-      }, 7000);
+      };
+
+      checkExports();
     } catch (error) {
       log.error(`Error making initial call to /self: ${error}`);
     }
