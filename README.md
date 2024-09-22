@@ -131,6 +131,19 @@ That should invoke the microservices and the dashboard.
 
 ---
 
+NPM Package could be installed via the commands:
+
+```
+$ npm i @ferhatkorkmaz11/infrastack-interview-fs-fk-20240916
+```
+
+[NPM Package](https://www.npmjs.com/package/@ferhatkorkmaz11/infrastack-interview-fs-fk-20240916)
+[YouTube](https://youtu.be/-_oplH0OEFc?si=VfWNnU9lz6mlJyF1)
+`I forgot to say that as performance suggestion it is good to cache those frequently read query results from Clickhouse to Redis. Since telemetry data is single write and almost never changes, it would be huge performance and cost boost.`
+`Also, again I forgot to say that in a real world scenario, during the SDK setup, API key parameter should be taken. Decode that API key and insert the logs, traces, and metrics with the organization id. All of the queries in the dashboard, then updated with respect to that organizations id, which would probably come from an auth middleware.`
+
+---
+
 If you encounter any problem during the above processes please let me know via my GSM, my email, or my LinkedIn at any time. I live in `UTC+3 timezone` and it may take some time to get back to you.
 GSM: +90 532 674 6608
 Email: ferhat@ferhatkorkmaz.com
