@@ -14,8 +14,7 @@
   },
   "workspaces": [
     "microservices/*",
-    "dashboard",
-    "scripts/*"
+    "dashboard"
   ],
   "packageManager": "npm@9.8.1"
 }
