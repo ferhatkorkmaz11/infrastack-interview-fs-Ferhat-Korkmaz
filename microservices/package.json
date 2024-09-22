@@ -1,0 +1,16 @@
+{
+  "name": "microservices",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev --filter=@scope/package",
+    "build": "turbo run build --filter=./*",
+    "start": "turbo run start --filter=./*",
+    "lint": "turbo run lint --filter=./*"
+  },
+  "workspaces": [
+    "user",
+    "payment",
+    "order"
+  ]
+}

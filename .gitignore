@@ -11,6 +11,7 @@ yarn-error.log*
 Thumbs.db
 
 /.turbo
+*.turbo
 /cache
 
 **/dist
@@ -40,6 +41,7 @@ Thumbs.db
 *~
 
 /package-lock.json
+**/package-lock.json
 /yarn.lock
 
 .eslintcache

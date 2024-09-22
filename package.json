@@ -3,11 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "turbo run test",
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "run-scripts": "turbo run run --filter=scripts"
+    "dev": "turbo run dev"
   },
   "keywords": [],
   "author": "",
@@ -17,9 +13,9 @@
     "turbo": "2.1.1"
   },
   "workspaces": [
-    "packages/*",
     "microservices/*",
     "dashboard",
-    "scripts"
-  ]
+    "scripts/*"
+  ],
+  "packageManager": "npm@9.8.1"
 }
